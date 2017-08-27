@@ -1,8 +1,8 @@
 class Mono < Formula
   desc "Cross platform, open source .NET development framework"
   homepage "http://www.mono-project.com/"
-  url "https://download.mono-project.com/sources/mono/mono-5.0.1.1.tar.bz2"
-  sha256 "48d6ae71d593cd01bf0f499de569359d45856cda325575e1bacb5fabaa7e9718"
+  url "https://download.mono-project.com/sources/mono/mono-5.2.0.215.tar.bz2"
+  sha256 "8f0cebd3f7b03f68b9bd015706da9c713ed968004612f1ef8350993d8fe850ea"
 
   bottle do
     sha256 "8dab2660d98e8e3bb1fa7f4640db04ef33e4e7fcfb7c3ef8a5c718e5254d80bd" => :sierra
@@ -30,6 +30,11 @@ class Mono < Formula
 
   conflicts_with "xsd", :because => "both install `xsd` binaries"
 
+  resource "msbuild" do
+    url "https://github.com/mono/msbuild.git",
+      :tag => "xplat-master",
+      :revision => "5633e38dd86d5ca588a7a3b9c8e961b5f7bdcf62"
+
   resource "fsharp" do
     url "https://github.com/fsharp/fsharp.git",
         :tag => "4.1.18",
@@ -52,6 +57,13 @@ class Mono < Formula
     # mono-gdb.py and mono-sgen-gdb.py are meant to be loaded by gdb, not to be
     # run directly, so we move them out of bin
     libexec.install bin/"mono-gdb.py", bin/"mono-sgen-gdb.py"
+
+    resource("msbuild").stage do
+      ENV.prepend_path "PATH", bin
+      ENV.prepend_path "PKG_CONFIG_PATH", lib/"pkgconfig"
+      system "./cibuild.sh", "--scope Compile --target Mono --host Mono"
+      system "./install-mono-prefix.sh", "{prefix}"
+    end
 
     # Now build and install fsharp as well
     if build.with? "fsharp"
